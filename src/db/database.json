@@ -27,7 +27,7 @@
     {
       "id": "usr-citizen-9361786461",
       "mobile": "9361786461",
-      "name": "roshan",
+      "name": "shankaran",
       "role": "CITIZEN",
       "createdAt": "2026-07-14T12:00:37.136Z"
     },
@@ -37,6 +37,13 @@
       "name": "shankaran",
       "role": "CITIZEN",
       "createdAt": "2026-07-14T12:01:17.997Z"
+    },
+    {
+      "id": "usr-citizen-9876543210",
+      "mobile": "9876543210",
+      "name": "New User Test",
+      "role": "CITIZEN",
+      "createdAt": "2026-07-14T12:15:06.672Z"
     }
   ],
   "petitions": [

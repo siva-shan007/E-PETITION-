@@ -41,8 +41,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     await new Promise((resolve) => setTimeout(resolve, 800));
 
     // Save temporary OTP and mobile for verification in session
-    sessionStorage.setItem('pending_citizen_mobile', mobile);
-    sessionStorage.setItem('pending_citizen_otp', mockOtp);
+    try {
+      sessionStorage.setItem('pending_citizen_mobile', mobile);
+      sessionStorage.setItem('pending_citizen_otp', mockOtp);
+    } catch (e) {
+      console.warn('Session storage not supported in this environment', e);
+    }
 
     // Dispatches a custom event to the notification logger
     const event = new CustomEvent('simulated_otp', {
@@ -56,10 +60,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const verifyCitizenOtp = async (mobile: string, otp: string, name: string): Promise<boolean> => {
     await new Promise((resolve) => setTimeout(resolve, 800));
     
-    const savedOtp = sessionStorage.getItem('pending_citizen_otp');
-    const savedMobile = sessionStorage.getItem('pending_citizen_mobile');
+    let savedOtp = null;
+    let savedMobile = null;
+    try {
+      savedOtp = sessionStorage.getItem('pending_citizen_otp');
+      savedMobile = sessionStorage.getItem('pending_citizen_mobile');
+    } catch (e) {
+      console.warn('Session storage read failed', e);
+    }
 
-    if (savedMobile === mobile && savedOtp === otp) {
+    console.log('Verifying OTP:', { savedMobile, mobile, savedOtp, otp, name });
+
+    // Enforce OTP match. If savedMobile matches or session storage is restricted, verify
+    if (savedOtp === otp && (savedMobile === mobile || !savedMobile)) {
       try {
         const res = await fetch('/api/auth/login', {
           method: 'POST',
@@ -69,13 +82,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (res.ok) {
           const data = await res.json();
           setUser(data.user);
-          sessionStorage.setItem('epetition_user', JSON.stringify(data.user));
-          sessionStorage.removeItem('pending_citizen_otp');
-          sessionStorage.removeItem('pending_citizen_mobile');
+          try {
+            sessionStorage.setItem('epetition_user', JSON.stringify(data.user));
+            sessionStorage.removeItem('pending_citizen_otp');
+            sessionStorage.removeItem('pending_citizen_mobile');
+          } catch (e) {
+            console.warn('Failed to persist user session', e);
+          }
           return true;
         }
       } catch (e) {
-        console.error(e);
+        console.error('API verification request failed', e);
       }
     }
 
