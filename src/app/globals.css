@@ -1,0 +1,126 @@
+@import "tailwindcss";
+
+@theme {
+  --color-gov-primary: #1e40af; /* Royal Blue */
+  --color-gov-primary-light: #3b82f6;
+  --color-gov-primary-dark: #1e3a8a;
+  --color-gov-bg: #f8fafc; /* Very light slate gray */
+  --color-gov-card: #ffffff;
+  --color-gov-text: #0f172a; /* Slate 900 */
+  --color-gov-text-muted: #475569; /* Slate 600 */
+  
+  --color-status-submitted: #3b82f6; /* Blue */
+  --color-status-verified: #6366f1; /* Indigo */
+  --color-status-review: #8b5cf6; /* Purple */
+  --color-status-forwarded: #ec4899; /* Pink */
+  --color-status-progress: #f97316; /* Orange - Pending */
+  --color-status-resolved: #10b981; /* Green - Success */
+  --color-status-closed: #64748b; /* Gray */
+  --color-status-urgent: #ef4444; /* Red - Urgent */
+
+  --animate-marquee: marquee 30s linear infinite;
+
+  @keyframes marquee {
+    0% { transform: translateX(0%); }
+    100% { transform: translateX(-100%); }
+  }
+}
+
+:root {
+  --background: #f8fafc;
+  --foreground: #0f172a;
+  --font-sans: var(--font-geist-sans), Arial, Helvetica, sans-serif;
+  --font-mono: var(--font-geist-mono), monospace;
+}
+
+/* Force light mode to maintain the trustworthy official look requested */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #f8fafc;
+    --foreground: #0f172a;
+  }
+}
+
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+  overflow-x: hidden;
+}
+
+/* Glassmorphism utility */
+.glass-panel {
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+}
+
+.glass-card {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.05);
+}
+
+/* Premium Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Focus outline for accessibility */
+*:focus-visible {
+  outline: 3px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+/* Accessibility classes */
+.accessibility-high-contrast {
+  --background: #ffffff !important;
+  --foreground: #000000 !important;
+  background-color: #ffffff !important;
+  color: #000000 !important;
+}
+
+.accessibility-high-contrast .glass-panel,
+.accessibility-high-contrast .glass-card {
+  background: #ffffff !important;
+  border: 2px solid #000000 !important;
+  box-shadow: none !important;
+}
+
+.accessibility-high-contrast text,
+.accessibility-high-contrast span,
+.accessibility-high-contrast p,
+.accessibility-high-contrast h1,
+.accessibility-high-contrast h2,
+.accessibility-high-contrast h3,
+.accessibility-high-contrast h4,
+.accessibility-high-contrast label {
+  color: #000000 !important;
+}
+
+.accessibility-high-contrast button,
+.accessibility-high-contrast a {
+  border: 2px solid #000000 !important;
+  background-color: #000000 !important;
+  color: #ffffff !important;
+}
+
+.accessibility-high-contrast button:hover,
+.accessibility-high-contrast a:hover {
+  background-color: #ffffff !important;
+  color: #000000 !important;
+}
