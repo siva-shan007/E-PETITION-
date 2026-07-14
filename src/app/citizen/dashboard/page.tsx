@@ -148,7 +148,7 @@ export default function CitizenDashboard() {
             </div>
             <div>
               <h1 className="text-xl sm:text-2xl font-extrabold text-slate-900 leading-tight">
-                {language === 'en' ? 'Namaste' : 'வணக்கம்'}, {user.name}
+                {language === 'en' ? 'Hello' : 'வணக்கம்'}, {user.name}
               </h1>
               <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-gov-text-muted mt-1 font-semibold">
                 <span className="flex items-center gap-1"><Phone className="w-3.5 h-3.5" /> +91 {user.mobile}</span>
