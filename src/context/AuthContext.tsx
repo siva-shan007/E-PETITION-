@@ -19,6 +19,8 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [pendingMobile, setPendingMobile] = useState<string | null>(null);
+  const [pendingOtp, setPendingOtp] = useState<string | null>(null);
 
   // Load user from storage on mount
   useEffect(() => {
@@ -40,7 +42,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Simulate API delay
     await new Promise((resolve) => setTimeout(resolve, 800));
 
-    // Save temporary OTP and mobile for verification in session
+    // Save temporary OTP and mobile in state and session storage
+    setPendingMobile(mobile);
+    setPendingOtp(mockOtp);
     try {
       sessionStorage.setItem('pending_citizen_mobile', mobile);
       sessionStorage.setItem('pending_citizen_otp', mockOtp);
@@ -60,13 +64,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const verifyCitizenOtp = async (mobile: string, otp: string, name: string): Promise<boolean> => {
     await new Promise((resolve) => setTimeout(resolve, 800));
     
-    let savedOtp = null;
-    let savedMobile = null;
-    try {
-      savedOtp = sessionStorage.getItem('pending_citizen_otp');
-      savedMobile = sessionStorage.getItem('pending_citizen_mobile');
-    } catch (e) {
-      console.warn('Session storage read failed', e);
+    let savedOtp = pendingOtp;
+    let savedMobile = pendingMobile;
+
+    if (!savedOtp) {
+      try {
+        savedOtp = sessionStorage.getItem('pending_citizen_otp');
+        savedMobile = sessionStorage.getItem('pending_citizen_mobile');
+      } catch (e) {
+        console.warn('Session storage read failed', e);
+      }
     }
 
     console.log('Verifying OTP:', { savedMobile, mobile, savedOtp, otp, name });
@@ -82,6 +89,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (res.ok) {
           const data = await res.json();
           setUser(data.user);
+          setPendingOtp(null);
+          setPendingMobile(null);
           try {
             sessionStorage.setItem('epetition_user', JSON.stringify(data.user));
             sessionStorage.removeItem('pending_citizen_otp');
