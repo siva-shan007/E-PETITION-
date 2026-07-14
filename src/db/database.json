@@ -23,6 +23,20 @@
       "name": "priya ",
       "role": "CITIZEN",
       "createdAt": "2026-07-14T11:16:53.800Z"
+    },
+    {
+      "id": "usr-citizen-9361786461",
+      "mobile": "9361786461",
+      "name": "roshan",
+      "role": "CITIZEN",
+      "createdAt": "2026-07-14T12:00:37.136Z"
+    },
+    {
+      "id": "usr-citizen-9361786416",
+      "mobile": "9361786416",
+      "name": "shankaran",
+      "role": "CITIZEN",
+      "createdAt": "2026-07-14T12:01:17.997Z"
     }
   ],
   "petitions": [

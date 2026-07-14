@@ -17,6 +17,7 @@ export default function CitizenLogin() {
   const [step, setStep] = useState<'MOBILE' | 'OTP'>('MOBILE');
   const [otp, setOtp] = useState('');
   const [otpSent, setOtpSent] = useState(false);
+  const [simulatedOtp, setSimulatedOtp] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const router = useRouter();
@@ -33,6 +34,7 @@ export default function CitizenLogin() {
     setLoading(true);
     try {
       const mockOtp = await loginAsCitizen(mobile);
+      setSimulatedOtp(mockOtp);
       setOtpSent(true);
       setStep('OTP');
       // Alert the code to the user as a fallback since the SMS simulation panel is deleted
@@ -158,6 +160,12 @@ export default function CitizenLogin() {
                   <span className="text-xs text-slate-600 font-semibold">Verification Code Sent To</span>
                   <span className="text-sm font-bold text-gov-primary tracking-wider font-mono">+91 {mobile}</span>
                 </div>
+
+                {simulatedOtp && (
+                  <div className="bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs p-3.5 rounded-xl text-center font-bold">
+                    Simulated OTP: <strong className="text-gov-primary text-sm font-mono tracking-wider ml-1">{simulatedOtp}</strong>
+                  </div>
+                )}
 
                 <div className="flex flex-col gap-1.5">
                   <label htmlFor="otp" className="text-xs font-bold text-slate-700">
