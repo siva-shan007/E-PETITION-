@@ -1,3 +1,4 @@
+// Data service for handling all database operations
 import crypto from 'crypto';
 import fs from 'fs';
 import path from 'path';
@@ -65,9 +66,9 @@ function mapStatusLog(l: PrismaStatusLog): StatusLog {
   };
 }
 
-interface PrismaPetitionWithHistory extends PrismaPetition {
+type PrismaPetitionWithHistory = PrismaPetition & {
   history?: PrismaStatusLog[];
-}
+};
 
 function mapPetition(p: PrismaPetitionWithHistory): Petition {
   return {
