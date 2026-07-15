@@ -90,7 +90,11 @@ function mapPetition(p: PrismaPetitionWithHistory): Petition {
     resolvedAt: p.resolvedAt ? p.resolvedAt.toISOString() : undefined,
     priority: p.priority as 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL',
     assignedDept: p.assignedDept || undefined,
-    history: (p.history || []).map(mapStatusLog).sort((a: StatusLog, b: StatusLog) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
+    history: (p.history || []).map(mapStatusLog).sort((a, b) => {
+      const timeA = typeof a.createdAt === 'string' ? new Date(a.createdAt).getTime() : a.createdAt.getTime();
+      const timeB = typeof b.createdAt === 'string' ? new Date(b.createdAt).getTime() : b.createdAt.getTime();
+      return timeA - timeB;
+    })
   };
 }
 
@@ -609,7 +613,11 @@ export const DataService = {
         const db = getFallbackDb();
         return db.announcements
           .filter(a => a.active)
-          .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+          .sort((a, b) => {
+            const timeA = typeof a.date === 'string' ? new Date(a.date).getTime() : a.date.getTime();
+            const timeB = typeof b.date === 'string' ? new Date(b.date).getTime() : b.date.getTime();
+            return timeB - timeA;
+          });
       }
     );
   },
@@ -624,7 +632,11 @@ export const DataService = {
       },
       () => {
         const db = getFallbackDb();
-        return [...db.announcements].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+        return [...db.announcements].sort((a, b) => {
+          const timeA = typeof a.date === 'string' ? new Date(a.date).getTime() : a.date.getTime();
+          const timeB = typeof b.date === 'string' ? new Date(b.date).getTime() : b.date.getTime();
+          return timeB - timeA;
+        });
       }
     );
   },
@@ -702,7 +714,11 @@ export const DataService = {
         return db.petitions.map((p) => ({
           ...p,
           history: db.statusLogs.filter(l => l.petitionId === p.id)
-        })).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+        })).sort((a, b) => {
+          const timeA = typeof a.createdAt === 'string' ? new Date(a.createdAt).getTime() : a.createdAt.getTime();
+          const timeB = typeof b.createdAt === 'string' ? new Date(b.createdAt).getTime() : b.createdAt.getTime();
+          return timeB - timeA;
+        });
       }
     );
   },
@@ -752,7 +768,11 @@ export const DataService = {
             ...p,
             history: db.statusLogs.filter(l => l.petitionId === p.id)
           }))
-          .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+          .sort((a, b) => {
+            const timeA = typeof a.createdAt === 'string' ? new Date(a.createdAt).getTime() : a.createdAt.getTime();
+            const timeB = typeof b.createdAt === 'string' ? new Date(b.createdAt).getTime() : b.createdAt.getTime();
+            return timeB - timeA;
+          });
       }
     );
   },
