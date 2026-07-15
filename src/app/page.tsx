@@ -411,9 +411,17 @@ export default function Home() {
                       <div className="bg-blue-50 text-gov-primary p-2 rounded-full border border-blue-100 shadow-inner">
                         <Landmark className="w-6 h-6" />
                       </div>
-                      <div className="text-center">
+                      <div className="text-center flex flex-col items-center gap-1">
                         <h2 className="text-sm font-extrabold text-slate-850">{t('login.citizen_title')}</h2>
                         <h3 className="text-[11px] font-bold text-gov-primary uppercase tracking-wider">{t('nav.title')}</h3>
+                        {/* Circular Leader Avatar below the header text */}
+                        <div className="w-16 h-16 rounded-full border-2 border-white overflow-hidden shadow-md bg-white mt-1">
+                          <img
+                            src="/tvk-leader.png"
+                            alt="Leader"
+                            className="w-full h-full object-cover object-top"
+                          />
+                        </div>
                       </div>
                     </div>
 
@@ -426,14 +434,6 @@ export default function Home() {
                             alt="Dr. R. Ramesh Kumar (Hon. MLA)"
                             className="w-full h-full object-contain"
                           />
-                          {/* Circular Leader Avatar Overlay at top-right */}
-                          <div className="absolute top-3 right-3 w-16 h-16 rounded-full border-2 border-white overflow-hidden shadow-lg bg-white">
-                            <img
-                              src="/tvk-leader.png"
-                              alt="Leader"
-                              className="w-full h-full object-cover object-top"
-                            />
-                          </div>
                         </div>
                         <div className="text-center">
                           <p className="text-xs font-extrabold text-slate-850">Dr. R. Ramesh Kumar</p>
