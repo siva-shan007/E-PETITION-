@@ -33,14 +33,14 @@ export default function CitizenLogin() {
 
     setLoading(true);
     try {
-      const mockOtp = await loginAsCitizen(mobile);
-      setSimulatedOtp(mockOtp);
-      setOtpSent(true);
-      setStep('OTP');
-      // Alert the code to the user as a fallback since the SMS simulation panel is deleted
-      alert(`[SMS Simulation] OTP Code is: ${mockOtp}`);
+      const success = await verifyCitizenOtp(mobile, '123456', name);
+      if (success) {
+        router.push('/citizen/dashboard');
+      } else {
+        setError('Login failed. Please try again.');
+      }
     } catch (err) {
-      setError('Failed to send OTP. Please try again.');
+      setError('Failed to login. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -150,7 +150,7 @@ export default function CitizenLogin() {
                   disabled={loading}
                   className="w-full bg-gov-primary hover:bg-gov-primary-dark text-white py-3 rounded-xl font-bold text-sm shadow transition-all flex items-center justify-center gap-1.5 mt-2 disabled:opacity-50 cursor-pointer"
                 >
-                  {loading ? '...' : t('form.send_otp')}
+                  {loading ? '...' : (language === 'en' ? 'Log In / Register' : 'உள்நுழை / பதிவு செய்')}
                 </button>
               </form>
             ) : (
