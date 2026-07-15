@@ -26,13 +26,40 @@ const Departments = [
 
 const Statuses: PetitionStatus[] = ['SUBMITTED', 'VERIFIED', 'UNDER_REVIEW', 'FORWARDED', 'IN_PROGRESS', 'RESOLVED', 'CLOSED'];
 
+interface StaffAnalytics {
+  overview: {
+    total: number;
+    today: number;
+    pending: number;
+    inProgress: number;
+    resolved: number;
+    avgResolutionDaysStr: string;
+    satisfactionScoreStr: string;
+    totalCitizens: number;
+    avgResponseTimeStr: string;
+  };
+  wardStats: { name: string; value: number; }[];
+  categoryStats: { name: string; value: number; percent: number; }[];
+  statusStats: { name: string; value: number; percent: number; }[];
+  dailyStats: { date: string; total: number; resolved: number; pending: number; }[];
+  departmentPerformance: {
+    dept: string;
+    assigned: number;
+    pending: number;
+    inProgress: number;
+    resolved: number;
+    rate: number;
+  }[];
+  activeCampTitle: string;
+}
+
 export default function StaffDashboard() {
   const { user, isAuthenticated, isLoading } = useAuth();
   const { language, t } = useLanguage();
   const router = useRouter();
 
   const [petitions, setPetitions] = useState<Petition[]>([]);
-  const [analytics, setAnalytics] = useState<any>(null);
+  const [analytics, setAnalytics] = useState<StaffAnalytics | null>(null);
   const [loadingData, setLoadingData] = useState(false);
 
   // Tab State
@@ -114,17 +141,6 @@ export default function StaffDashboard() {
     }
   };
 
-  useEffect(() => {
-    if (aptRescheduleDate && aptConfig) {
-      checkRescheduleDateAvailability(aptRescheduleDate);
-    } else {
-      setAptBookedSlotsForDate([]);
-      setAptDateMessage('');
-      setAptDateBlocked(false);
-      setAptRescheduleSlot('');
-    }
-  }, [aptRescheduleDate, aptConfig]);
-
   const checkRescheduleDateAvailability = async (selectedDate: string) => {
     if (!aptConfig) return;
     setAptDateMessage('');
@@ -169,12 +185,31 @@ export default function StaffDashboard() {
   };
 
   useEffect(() => {
+    const timer = setTimeout(() => {
+      if (aptRescheduleDate && aptConfig) {
+        checkRescheduleDateAvailability(aptRescheduleDate);
+      } else {
+        setAptBookedSlotsForDate([]);
+        setAptDateMessage('');
+        setAptDateBlocked(false);
+        setAptRescheduleSlot('');
+      }
+    }, 0);
+
+    return () => clearTimeout(timer);
+  }, [aptRescheduleDate, aptConfig]);
+
+  useEffect(() => {
     if (!isLoading && (!isAuthenticated || user?.role !== 'STAFF')) {
       router.push('/staff/login');
       return;
     }
 
-    loadData();
+    const timer = setTimeout(() => {
+      loadData();
+    }, 0);
+
+    return () => clearTimeout(timer);
   }, [user, isAuthenticated, isLoading, router]);
 
   const handleUpdateStatus = async (e: React.FormEvent) => {
@@ -661,7 +696,7 @@ export default function StaffDashboard() {
                           <label className="text-[9px] text-slate-400 font-bold uppercase">Priority Rating</label>
                           <select
                             value={actionPriority}
-                            onChange={(e) => setActionPriority(e.target.value as any)}
+                            onChange={(e) => setActionPriority(e.target.value as 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL')}
                             className="w-full px-2 py-1.8 border rounded bg-white cursor-pointer outline-none"
                           >
                             <option value="LOW">Low</option>

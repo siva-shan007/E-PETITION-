@@ -5,7 +5,7 @@ import {
   StatusLog as PrismaStatusLog, 
   Announcement as PrismaAnnouncement, 
   Appointment as PrismaAppointment,
-  AppointmentConfig as PrismaAppointmentConfig
+  Prisma
 } from '@prisma/client';
 import { Petition, Announcement, AnnouncementCategory, PetitionStatus, StatusLog, UserRole, Appointment, AppointmentConfig, AppointmentStatus } from '../types';
 import { prisma } from './prisma';
@@ -406,7 +406,7 @@ export const DataService = {
     });
     if (!petition) return null;
 
-    const dataToUpdate: any = {
+    const dataToUpdate: Prisma.PetitionUpdateInput = {
       status,
       remarks,
       updatedAt: new Date(),
@@ -767,7 +767,7 @@ export const DataService = {
     });
     if (!appointment) return null;
 
-    const dataToUpdate: any = {
+    const dataToUpdate: Prisma.AppointmentUpdateInput = {
       status,
       updatedAt: new Date()
     };

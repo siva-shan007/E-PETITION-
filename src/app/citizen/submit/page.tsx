@@ -55,11 +55,14 @@ export default function SubmitPetition() {
     }
 
     if (user) {
-      setFormData(prev => ({
-        ...prev,
-        name: user.name || '',
-        mobile: user.mobile || ''
-      }));
+      const timer = setTimeout(() => {
+        setFormData(prev => ({
+          ...prev,
+          name: user.name || '',
+          mobile: user.mobile || ''
+        }));
+      }, 0);
+      return () => clearTimeout(timer);
     }
   }, [user, isAuthenticated, isLoading, router]);
 

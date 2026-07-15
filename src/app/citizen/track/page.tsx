@@ -28,12 +28,6 @@ function TrackPetitionContent() {
   const [searched, setSearched] = useState(false);
   const [error, setError] = useState('');
 
-  useEffect(() => {
-    if (user?.mobile && !searchId) {
-      setSearchId(user.mobile);
-    }
-  }, [user, searchId]);
-
   const categoryLabels: Record<string, string> = {
     'Roads & Infrastructure': t('cat.roads'),
     'Water Supply': t('cat.water'),
@@ -101,9 +95,21 @@ function TrackPetitionContent() {
   };
 
   useEffect(() => {
+    const timer = setTimeout(() => {
+      if (user?.mobile && !searchId) {
+        setSearchId(user.mobile);
+      }
+    }, 0);
+    return () => clearTimeout(timer);
+  }, [user, searchId]);
+
+  useEffect(() => {
     const q = idParam || mobileParam;
     if (q) {
-      fetchPetition(q);
+      const timer = setTimeout(() => {
+        fetchPetition(q);
+      }, 0);
+      return () => clearTimeout(timer);
     }
   }, [idParam, mobileParam]);
 

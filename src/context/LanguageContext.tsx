@@ -417,19 +417,23 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
   // Detect and load language on mount
   useEffect(() => {
     const savedLang = localStorage.getItem('epetition_lang') as Language;
-    if (savedLang === 'en' || savedLang === 'ta') {
-      setLanguageState(savedLang);
-    } else {
-      // Auto-detect browser preferred language
-      const browserLang = navigator.language.split('-')[0];
-      if (browserLang === 'ta') {
-        setLanguageState('ta');
-        localStorage.setItem('epetition_lang', 'ta');
+    const timer = setTimeout(() => {
+      if (savedLang === 'en' || savedLang === 'ta') {
+        setLanguageState(savedLang);
       } else {
-        setLanguageState('en');
-        localStorage.setItem('epetition_lang', 'en');
+        // Auto-detect browser preferred language
+        const browserLang = navigator.language.split('-')[0];
+        if (browserLang === 'ta') {
+          setLanguageState('ta');
+          localStorage.setItem('epetition_lang', 'ta');
+        } else {
+          setLanguageState('en');
+          localStorage.setItem('epetition_lang', 'en');
+        }
       }
-    }
+    }, 0);
+
+    return () => clearTimeout(timer);
   }, []);
 
   const setLanguage = (lang: Language) => {

@@ -10,7 +10,7 @@ import { Navbar } from '@/components/shared/Navbar';
 import { Footer } from '@/components/shared/Footer';
 import { useLanguage } from '@/context/LanguageContext';
 import { useAuth } from '@/context/AuthContext';
-import { Petition, PetitionStatus } from '@/types';
+import { Petition, PetitionStatus, Announcement } from '@/types';
 import confetti from 'canvas-confetti';
 
 const Wards = ['Ward 12', 'Ward 7', 'Ward 15', 'Ward 3', 'Ward 18'];
@@ -57,20 +57,23 @@ export default function Home() {
 
   useEffect(() => {
     if (user?.mobile) {
-      setTrackMobile(user.mobile);
-      // Auto-fill track search field with mobile to make it easy for logged-in citizens
-      setTrackSearchId(user.mobile);
+      const timer = setTimeout(() => {
+        setTrackMobile(user.mobile);
+        // Auto-fill track search field with mobile to make it easy for logged-in citizens
+        setTrackSearchId(user.mobile);
+      }, 0);
+      return () => clearTimeout(timer);
     }
   }, [user]);
 
   // Dynamic news bulletins & announcements
-  const [announcements, setAnnouncements] = useState<any[]>([]);
+  const [announcements, setAnnouncements] = useState<Announcement[]>([]);
 
   useEffect(() => {
     fetch('/api/announcements')
       .then(res => res.json())
       .then(data => {
-        const active = data.filter((a: any) => a.active);
+        const active = data.filter((a: Announcement) => a.active);
         setAnnouncements(active.slice(0, 3));
       })
       .catch(err => console.error(err));
@@ -362,7 +365,7 @@ export default function Home() {
                 </div>
               ) : (
                 <div className="flex flex-col gap-4">
-                  {announcements.map((ann: any) => (
+                  {announcements.map((ann: Announcement) => (
                     <div key={ann.id} className="flex gap-4 items-start border-b border-slate-100 pb-4 last:border-0 last:pb-0">
                       <div className="bg-blue-50 text-blue-600 px-3 py-1.5 rounded-lg border text-center font-bold font-mono">
                         <span className="text-[9px] uppercase block tracking-wider">{ann.category}</span>

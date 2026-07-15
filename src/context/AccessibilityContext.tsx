@@ -17,22 +17,6 @@ export function AccessibilityProvider({ children }: { children: React.ReactNode 
   const [fontScale, setFontScaleState] = useState<FontScale>('normal');
   const [highContrast, setHighContrast] = useState(false);
 
-  // Load preferences from localStorage on mount
-  useEffect(() => {
-    const savedScale = localStorage.getItem('access_font_scale') as FontScale;
-    const savedContrast = localStorage.getItem('access_high_contrast') === 'true';
-
-    if (savedScale) {
-      setFontScale(savedScale);
-    }
-    if (savedContrast) {
-      setHighContrast(savedContrast);
-      if (savedContrast) {
-        document.documentElement.classList.add('accessibility-high-contrast');
-      }
-    }
-  }, []);
-
   const setFontScale = (scale: FontScale) => {
     setFontScaleState(scale);
     localStorage.setItem('access_font_scale', scale);
@@ -47,6 +31,24 @@ export function AccessibilityProvider({ children }: { children: React.ReactNode 
       document.documentElement.style.fontSize = '130%';
     }
   };
+
+  // Load preferences from localStorage on mount
+  useEffect(() => {
+    const savedScale = localStorage.getItem('access_font_scale') as FontScale;
+    const savedContrast = localStorage.getItem('access_high_contrast') === 'true';
+
+    const timer = setTimeout(() => {
+      if (savedScale) {
+        setFontScale(savedScale);
+      }
+      if (savedContrast) {
+        setHighContrast(savedContrast);
+        document.documentElement.classList.add('accessibility-high-contrast');
+      }
+    }, 0);
+
+    return () => clearTimeout(timer);
+  }, []);
 
   const toggleHighContrast = () => {
     const newVal = !highContrast;

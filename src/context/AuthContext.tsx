@@ -25,14 +25,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Load user from storage on mount
   useEffect(() => {
     const savedUser = sessionStorage.getItem('epetition_user');
-    if (savedUser) {
-      try {
-        setUser(JSON.parse(savedUser));
-      } catch (e) {
-        console.error('Failed to parse saved user session', e);
+    const timer = setTimeout(() => {
+      if (savedUser) {
+        try {
+          setUser(JSON.parse(savedUser));
+        } catch (e) {
+          console.error('Failed to parse saved user session', e);
+        }
       }
-    }
-    setIsLoading(false);
+      setIsLoading(false);
+    }, 0);
+
+    return () => clearTimeout(timer);
   }, []);
 
   const loginAsCitizen = async (mobile: string): Promise<string> => {

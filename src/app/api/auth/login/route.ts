@@ -47,8 +47,9 @@ export async function POST(request: Request) {
       }
     });
 
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message || 'Authentication failed' }, { status: 500 });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Authentication failed';
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
 export const dynamic = 'force-dynamic';

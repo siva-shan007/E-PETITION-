@@ -8,7 +8,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useLanguage } from '@/context/LanguageContext';
-import { Petition } from '@/types';
+import { Petition, User } from '@/types';
 import Link from 'next/link';
 
 // Import Recharts
@@ -21,13 +21,40 @@ const COLORS = ['#2563eb', '#10b981', '#f97316', '#ef4444', '#8b5cf6', '#ec4899'
 
 const WardsList = ['Ward 12', 'Ward 7', 'Ward 15', 'Ward 3', 'Ward 18'];
 
+interface MlaAnalytics {
+  overview: {
+    total: number;
+    today: number;
+    pending: number;
+    inProgress: number;
+    resolved: number;
+    avgResolutionDaysStr: string;
+    satisfactionScoreStr: string;
+    totalCitizens: number;
+    avgResponseTimeStr: string;
+  };
+  wardStats: { name: string; value: number; }[];
+  categoryStats: { name: string; value: number; percent: number; }[];
+  statusStats: { name: string; value: number; percent: number; }[];
+  dailyStats: { date: string; total: number; resolved: number; pending: number; }[];
+  departmentPerformance: {
+    dept: string;
+    assigned: number;
+    pending: number;
+    inProgress: number;
+    resolved: number;
+    rate: number;
+  }[];
+  activeCampTitle: string;
+}
+
 export default function MlaDashboard() {
   const { user, isAuthenticated, isLoading, logout } = useAuth();
   const { language, t } = useLanguage();
   const router = useRouter();
 
   const [mounted, setMounted] = useState(false);
-  const [analytics, setAnalytics] = useState<any>(null);
+  const [analytics, setAnalytics] = useState<MlaAnalytics | null>(null);
   const [petitions, setPetitions] = useState<Petition[]>([]);
   const [activeTab, setActiveTab] = useState<'dashboard' | 'staff' | 'appointments'>('dashboard');
 
@@ -36,7 +63,7 @@ export default function MlaDashboard() {
   const [staffMobile, setStaffMobile] = useState('');
   const [staffPassword, setStaffPassword] = useState('');
   const [staffWard, setStaffWard] = useState('Ward 12');
-  const [staffList, setStaffList] = useState<any[]>([]);
+  const [staffList, setStaffList] = useState<User[]>([]);
   const [addingStaff, setAddingStaff] = useState(false);
   const [staffError, setStaffError] = useState('');
 
@@ -54,7 +81,10 @@ export default function MlaDashboard() {
   const [savingConfig, setSavingConfig] = useState<boolean>(false);
 
   useEffect(() => {
-    setMounted(true);
+    const timer = setTimeout(() => {
+      setMounted(true);
+    }, 0);
+    return () => clearTimeout(timer);
   }, []);
 
   const loadData = async () => {
@@ -95,7 +125,10 @@ export default function MlaDashboard() {
     }
 
     if (mounted) {
-      loadData();
+      const timer = setTimeout(() => {
+        loadData();
+      }, 0);
+      return () => clearTimeout(timer);
     }
   }, [user, isAuthenticated, isLoading, router, mounted]);
 
@@ -432,7 +465,7 @@ export default function MlaDashboard() {
                             paddingAngle={2}
                             dataKey="value"
                           >
-                            {analytics.categoryStats.map((entry: any, index: number) => (
+                            {analytics.categoryStats.map((entry: { name: string; value: number; percent: number }, index: number) => (
                               <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                             ))}
                           </Pie>
@@ -528,7 +561,7 @@ export default function MlaDashboard() {
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-slate-100">
-                        {analytics.departmentPerformance.map((dept: any, idx: number) => (
+                        {analytics.departmentPerformance.map((dept: { dept: string; assigned: number; pending: number; inProgress: number; resolved: number; rate: number }, idx: number) => (
                           <tr key={idx} className="text-left">
                             <td className="py-2.5 font-bold text-slate-805">{dept.dept}</td>
                             <td className="py-2.5 text-center text-slate-700">{dept.assigned}</td>
@@ -562,7 +595,7 @@ export default function MlaDashboard() {
                             paddingAngle={2}
                             dataKey="value"
                           >
-                            {analytics.statusStats.map((entry: any, index: number) => (
+                            {analytics.statusStats.map((entry: { name: string; value: number; percent: number }, index: number) => (
                               <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                             ))}
                           </Pie>

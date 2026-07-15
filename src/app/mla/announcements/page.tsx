@@ -41,7 +41,10 @@ export default function AnnouncementManager() {
       return;
     }
 
-    loadAnnouncements();
+    const timer = setTimeout(() => {
+      loadAnnouncements();
+    }, 0);
+    return () => clearTimeout(timer);
   }, [user, isAuthenticated, isLoading, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {

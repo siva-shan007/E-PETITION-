@@ -34,31 +34,6 @@ export default function CitizenAppointments() {
   const [myAppointments, setMyAppointments] = useState<Appointment[]>([]);
   const [listLoading, setListLoading] = useState(false);
 
-  // Load config & citizen appointments on mount
-  useEffect(() => {
-    if (!isLoading && (!isAuthenticated || user?.role !== 'CITIZEN')) {
-      router.push('/citizen/login');
-      return;
-    }
-
-    if (user) {
-      fetchConfig();
-      fetchCitizenAppointments();
-    }
-  }, [user, isAuthenticated, isLoading, router]);
-
-  // Fetch slots occupancy whenever date changes
-  useEffect(() => {
-    if (date && config) {
-      checkDateAvailability(date);
-    } else {
-      setBookedSlotsForDate([]);
-      setDateStatusMessage('');
-      setDateIsBlocked(false);
-      setSelectedSlot('');
-    }
-  }, [date, config]);
-
   const fetchConfig = async () => {
     try {
       const res = await fetch('/api/appointments/config');
@@ -138,6 +113,37 @@ export default function CitizenAppointments() {
       console.error('Failed to check date availability', err);
     }
   };
+
+  // Load config & citizen appointments on mount
+  useEffect(() => {
+    if (!isLoading && (!isAuthenticated || user?.role !== 'CITIZEN')) {
+      router.push('/citizen/login');
+      return;
+    }
+
+    if (user) {
+      const timer = setTimeout(() => {
+        fetchConfig();
+        fetchCitizenAppointments();
+      }, 0);
+      return () => clearTimeout(timer);
+    }
+  }, [user, isAuthenticated, isLoading, router]);
+
+  // Fetch slots occupancy whenever date changes
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (date && config) {
+        checkDateAvailability(date);
+      } else {
+        setBookedSlotsForDate([]);
+        setDateStatusMessage('');
+        setDateIsBlocked(false);
+        setSelectedSlot('');
+      }
+    }, 0);
+    return () => clearTimeout(timer);
+  }, [date, config]);
 
   const handleBookAppointment = async (e: React.FormEvent) => {
     e.preventDefault();

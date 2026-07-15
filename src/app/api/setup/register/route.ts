@@ -17,7 +17,8 @@ export async function POST(request: Request) {
 
     const admin = await DataService.registerAdmin({ name, mobile, email, password });
     return NextResponse.json({ success: true, user: { name: admin.name, mobile: admin.mobile, role: admin.role } }, { status: 201 });
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message || 'Registration failed' }, { status: 550 });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Registration failed';
+    return NextResponse.json({ error: message }, { status: 550 });
   }
 }

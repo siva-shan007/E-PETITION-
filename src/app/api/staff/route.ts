@@ -40,8 +40,9 @@ export async function POST(request: Request) {
         createdAt: staff.createdAt
       }
     }, { status: 201 });
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message || 'Registration failed' }, { status: 500 });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Registration failed';
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
 export const dynamic = 'force-dynamic';
