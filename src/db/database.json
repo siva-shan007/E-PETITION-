@@ -20,9 +20,16 @@
     {
       "id": "usr-citizen-9361786445",
       "mobile": "9361786445",
-      "name": "anil",
+      "name": "Test User",
       "role": "CITIZEN",
       "createdAt": "2026-07-15T07:51:03.464Z"
+    },
+    {
+      "id": "usr-citizen-9361786461",
+      "mobile": "9361786461",
+      "name": "sekar",
+      "role": "CITIZEN",
+      "createdAt": "2026-07-15T08:17:04.451Z"
     }
   ],
   "petitions": [],
