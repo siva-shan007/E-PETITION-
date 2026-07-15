@@ -1,7 +1,7 @@
 // Data service for handling all database operations
-import crypto from 'crypto';
-import fs from 'fs';
-import path from 'path';
+import * as crypto from 'crypto';
+import * as fs from 'fs';
+import * as path from 'path';
 import { 
   User as PrismaUser, 
   Petition as PrismaPetition, 
