@@ -426,6 +426,14 @@ export default function Home() {
                             alt="Dr. R. Ramesh Kumar (Hon. MLA)"
                             className="w-full h-full object-contain"
                           />
+                          {/* Circular Leader Avatar Overlay at top-right */}
+                          <div className="absolute top-3 right-3 w-16 h-16 rounded-full border-2 border-white overflow-hidden shadow-lg bg-white">
+                            <img
+                              src="/tvk-leader.png"
+                              alt="Leader"
+                              className="w-full h-full object-cover object-top"
+                            />
+                          </div>
                         </div>
                         <div className="text-center">
                           <p className="text-xs font-extrabold text-slate-850">Dr. R. Ramesh Kumar</p>
