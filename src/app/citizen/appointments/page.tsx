@@ -54,7 +54,7 @@ export default function CitizenAppointments() {
       const res = await fetch(`/api/appointments?citizenId=${user.mobile}`);
       if (res.ok) {
         const data = await res.json();
-        setMyAppointments(data);
+        setMyAppointments(Array.isArray(data) ? data : []);
       }
     } catch (err) {
       console.error('Failed to fetch citizen appointments', err);

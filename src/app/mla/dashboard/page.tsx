@@ -97,8 +97,8 @@ export default function MlaDashboard() {
       const staffData = await staffRes.json();
 
       setAnalytics(stats);
-      setPetitions(list);
-      setStaffList(staffData);
+      setPetitions(Array.isArray(list) ? list : []);
+      setStaffList(Array.isArray(staffData) ? staffData : []);
 
       const configRes = await fetch('/api/appointments/config');
       if (configRes.ok) {

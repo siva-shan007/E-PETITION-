@@ -73,8 +73,12 @@ export default function Home() {
     fetch('/api/announcements')
       .then(res => res.json())
       .then(data => {
-        const active = data.filter((a: Announcement) => a.active);
-        setAnnouncements(active.slice(0, 3));
+        if (Array.isArray(data)) {
+          const active = data.filter((a: Announcement) => a.active);
+          setAnnouncements(active.slice(0, 3));
+        } else {
+          setAnnouncements([]);
+        }
       })
       .catch(err => console.error(err));
   }, []);

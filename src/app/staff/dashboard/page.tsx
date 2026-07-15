@@ -102,7 +102,8 @@ export default function StaffDashboard() {
     try {
       const listRes = await fetch('/api/petitions');
       const list = await listRes.json();
-      setPetitions(list);
+      const petitionsList = Array.isArray(list) ? list : [];
+      setPetitions(petitionsList);
 
       const statsRes = await fetch('/api/analytics');
       const stats = await statsRes.json();
@@ -111,9 +112,10 @@ export default function StaffDashboard() {
       const aptsRes = await fetch('/api/appointments');
       if (aptsRes.ok) {
         const apts = await aptsRes.json();
-        setAppointments(apts);
+        const appointmentsList = Array.isArray(apts) ? apts : [];
+        setAppointments(appointmentsList);
         if (selectedAppointment) {
-          const updatedApt = apts.find((a: Appointment) => a.id === selectedAppointment.id);
+          const updatedApt = appointmentsList.find((a: Appointment) => a.id === selectedAppointment.id);
           if (updatedApt) {
             setSelectedAppointment(updatedApt);
           }
@@ -129,7 +131,7 @@ export default function StaffDashboard() {
 
       // Keep selected petition updated if open
       if (selectedPetition) {
-        const updated = list.find((p: Petition) => p.id.toUpperCase() === selectedPetition.id.toUpperCase());
+        const updated = petitionsList.find((p: Petition) => p.id.toUpperCase() === selectedPetition.id.toUpperCase());
         if (updated) {
           setSelectedPetition(updated);
         }
