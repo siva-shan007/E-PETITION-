@@ -1,4 +1,4 @@
-﻿import fs from 'fs';
+import fs from 'fs';
 import path from 'path';
 import crypto from 'crypto';
 import { Petition, Announcement, PetitionStatus, StatusLog, User, UserRole, Appointment, AppointmentConfig, AppointmentStatus } from '../types';
@@ -655,12 +655,18 @@ export const DataService = {
       return { error: 'This date is fully booked. Please choose another available date.' };
     }
 
-    // Check slot duplicate booking
-    const slotDup = db.appointments.some(
-      a => a.date === appointmentData.date && a.timeSlot === appointmentData.timeSlot && activeStates.includes(a.status)
-    );
-    if (slotDup) {
-      return { error: 'This time slot is already booked. Please choose another slot.' };
+    // If timeSlot is 'General' or empty, generate a unique slot designation automatically
+    let resolvedTimeSlot = appointmentData.timeSlot || 'General';
+    if (resolvedTimeSlot === 'General') {
+      resolvedTimeSlot = `General (Slot ${activeDailyBookings.length + 1})`;
+    } else {
+      // Check slot duplicate booking (only for specific time slots)
+      const slotDup = db.appointments.some(
+        a => a.date === appointmentData.date && a.timeSlot === resolvedTimeSlot && activeStates.includes(a.status)
+      );
+      if (slotDup) {
+        return { error: 'This time slot is already booked. Please choose another slot.' };
+      }
     }
 
     // Generate unique Appointment ID
@@ -671,7 +677,7 @@ export const DataService = {
       citizenName: appointmentData.citizenName,
       citizenMobile: appointmentData.citizenMobile,
       date: appointmentData.date,
-      timeSlot: appointmentData.timeSlot,
+      timeSlot: resolvedTimeSlot,
       purpose: appointmentData.purpose,
       status: 'PENDING',
       createdAt: new Date().toISOString(),

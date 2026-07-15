@@ -17,7 +17,7 @@ export default function CitizenAppointments() {
 
   // Booking Form State
   const [date, setDate] = useState('');
-  const [selectedSlot, setSelectedSlot] = useState('');
+  const [selectedSlot, setSelectedSlot] = useState('General');
   const [purpose, setPurpose] = useState('');
   const [bookingError, setBookingError] = useState('');
   const [bookingSuccess, setBookingSuccess] = useState('');
@@ -68,7 +68,7 @@ export default function CitizenAppointments() {
 
     setDateStatusMessage('');
     setDateIsBlocked(false);
-    setSelectedSlot('');
+    setSelectedSlot('General');
 
     const dateObj = new Date(selectedDate);
     const weekday = dateObj.getDay(); // 0 = Sunday, 6 = Saturday
@@ -139,7 +139,7 @@ export default function CitizenAppointments() {
         setBookedSlotsForDate([]);
         setDateStatusMessage('');
         setDateIsBlocked(false);
-        setSelectedSlot('');
+        setSelectedSlot('General');
       }
     }, 0);
     return () => clearTimeout(timer);
@@ -151,7 +151,7 @@ export default function CitizenAppointments() {
     setBookingSuccess('');
 
     if (!user) return;
-    if (!date || !selectedSlot || !purpose.trim()) {
+    if (!date || !purpose.trim()) {
       setBookingError(language === 'en' ? 'Please complete all required booking fields.' : 'தேவையான அனைத்து விவரங்களையும் நிரப்பவும்.');
       return;
     }
@@ -320,39 +320,6 @@ export default function CitizenAppointments() {
                 </div>
               )}
 
-              {/* Time Slots Selector */}
-              {date && !dateIsBlocked && (
-                <div className="flex flex-col gap-2">
-                  <label className="text-[10px] font-bold text-slate-500 uppercase flex items-center gap-1">
-                    <Clock className="w-3.5 h-3.5" />
-                    {language === 'en' ? 'Select Available Time Slot' : 'நேரத்தைத் தேர்ந்தெடுக்கவும்'}
-                  </label>
-                  <div className="grid grid-cols-2 gap-2 max-h-[220px] overflow-y-auto pr-1">
-                    {allSlots.map((slot) => {
-                      const isBooked = bookedSlotsForDate.includes(slot);
-                      return (
-                        <button
-                          key={slot}
-                          type="button"
-                          disabled={isBooked}
-                          onClick={() => setSelectedSlot(slot)}
-                          className={`p-2.5 rounded-xl border text-center font-bold text-[10px] sm:text-xs transition-all ${
-                            isBooked
-                              ? 'bg-slate-100 text-slate-350 border-slate-200 cursor-not-allowed line-through'
-                              : selectedSlot === slot
-                              ? 'bg-gov-primary text-white border-gov-primary shadow'
-                              : 'bg-white text-slate-700 border-slate-200 hover:border-gov-primary hover:bg-slate-50'
-                          }`}
-                        >
-                          {slot}
-                          {isBooked && ' (Booked)'}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-
               {/* Purpose Input */}
               <div className="flex flex-col gap-1.5">
                 <label className="text-[10px] font-bold text-slate-500 uppercase">
@@ -371,7 +338,7 @@ export default function CitizenAppointments() {
               {/* Submit Button */}
               <button
                 type="submit"
-                disabled={bookingLoading || dateIsBlocked || !selectedSlot}
+                disabled={bookingLoading || dateIsBlocked}
                 className="w-full bg-gov-primary hover:bg-gov-primary-dark text-white font-extrabold py-3.5 rounded-xl shadow transition-all cursor-pointer flex items-center justify-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed text-xs sm:text-sm mt-2"
               >
                 {bookingLoading ? (
