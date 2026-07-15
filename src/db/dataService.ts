@@ -1,4 +1,12 @@
 import crypto from 'crypto';
+import { 
+  User as PrismaUser, 
+  Petition as PrismaPetition, 
+  StatusLog as PrismaStatusLog, 
+  Announcement as PrismaAnnouncement, 
+  Appointment as PrismaAppointment,
+  AppointmentConfig as PrismaAppointmentConfig
+} from '@prisma/client';
 import { Petition, Announcement, AnnouncementCategory, PetitionStatus, StatusLog, UserRole, Appointment, AppointmentConfig, AppointmentStatus } from '../types';
 import { prisma } from './prisma';
 
@@ -20,7 +28,7 @@ export function hashPassword(password: string): string {
 }
 
 // Map database records to frontend structures
-function mapUser(u: any): UserRecord {
+function mapUser(u: PrismaUser): UserRecord {
   return {
     id: u.id,
     mobile: u.mobile,
@@ -33,7 +41,7 @@ function mapUser(u: any): UserRecord {
   };
 }
 
-function mapAnnouncement(a: any): Announcement {
+function mapAnnouncement(a: PrismaAnnouncement): Announcement {
   return {
     id: a.id,
     title: a.title,
@@ -44,7 +52,7 @@ function mapAnnouncement(a: any): Announcement {
   };
 }
 
-function mapStatusLog(l: any): StatusLog {
+function mapStatusLog(l: PrismaStatusLog): StatusLog {
   return {
     id: l.id,
     petitionId: l.petitionId,
@@ -55,7 +63,11 @@ function mapStatusLog(l: any): StatusLog {
   };
 }
 
-function mapPetition(p: any): Petition {
+interface PrismaPetitionWithHistory extends PrismaPetition {
+  history?: PrismaStatusLog[];
+}
+
+function mapPetition(p: PrismaPetitionWithHistory): Petition {
   return {
     id: p.id,
     name: p.name,
@@ -79,7 +91,7 @@ function mapPetition(p: any): Petition {
   };
 }
 
-function mapAppointment(a: any): Appointment {
+function mapAppointment(a: PrismaAppointment): Appointment {
   return {
     id: a.id,
     citizenId: a.citizenId,
@@ -440,23 +452,23 @@ export const DataService = {
 
   // Calculate dynamic analytics from DB
   getAnalytics: async () => {
-    const petitions = await prisma.petition.findMany();
-    const announcements = await prisma.announcement.findMany();
+    const petitions: PrismaPetition[] = await prisma.petition.findMany();
+    const announcements: PrismaAnnouncement[] = await prisma.announcement.findMany();
     
     const total = petitions.length;
-    const today = petitions.filter(p => {
+    const today = petitions.filter((p: PrismaPetition) => {
       const todayStr = new Date().toISOString().split('T')[0];
       return p.createdAt.toISOString().startsWith(todayStr);
     }).length;
     
-    const pending = petitions.filter(p => p.status === 'SUBMITTED' || p.status === 'VERIFIED' || p.status === 'UNDER_REVIEW').length;
-    const inProgress = petitions.filter(p => p.status === 'FORWARDED' || p.status === 'IN_PROGRESS').length;
-    const resolved = petitions.filter(p => p.status === 'RESOLVED' || p.status === 'CLOSED').length;
+    const pending = petitions.filter((p: PrismaPetition) => p.status === 'SUBMITTED' || p.status === 'VERIFIED' || p.status === 'UNDER_REVIEW').length;
+    const inProgress = petitions.filter((p: PrismaPetition) => p.status === 'FORWARDED' || p.status === 'IN_PROGRESS').length;
+    const resolved = petitions.filter((p: PrismaPetition) => p.status === 'RESOLVED' || p.status === 'CLOSED').length;
     
-    const resolvedPetitions = petitions.filter(p => p.status === 'RESOLVED' || p.status === 'CLOSED');
+    const resolvedPetitions = petitions.filter((p: PrismaPetition) => p.status === 'RESOLVED' || p.status === 'CLOSED');
     let avgResolutionDaysStr = '–';
     if (resolvedPetitions.length > 0) {
-      const totalMs = resolvedPetitions.reduce((acc, curr) => {
+      const totalMs = resolvedPetitions.reduce((acc: number, curr: PrismaPetition) => {
         return acc + (new Date(curr.updatedAt).getTime() - new Date(curr.createdAt).getTime());
       }, 0);
       const val = parseFloat((totalMs / resolvedPetitions.length / (24 * 60 * 60 * 1000)).toFixed(1));
@@ -464,18 +476,18 @@ export const DataService = {
     }
     
     const satisfactionScoreStr = total > 0 ? '4.3 / 5' : '–';
-    const uniqueMobiles = new Set(petitions.map(p => p.mobile));
+    const uniqueMobiles = new Set(petitions.map((p: PrismaPetition) => p.mobile));
     const totalCitizens = uniqueMobiles.size;
     const avgResponseTimeStr = total > 0 ? '1.8 Days' : '–';
 
-    const categoryStats = categories.map(c => {
-      const value = petitions.filter(p => p.category === c).length;
+    const categoryStats = categories.map((c: string) => {
+      const value = petitions.filter((p: PrismaPetition) => p.category === c).length;
       const pct = total > 0 ? value / total : 0;
       return { name: c, value, percent: pct };
     });
 
-    const wardStats = wards.map(w => {
-      const value = petitions.filter(p => p.ward === w).length;
+    const wardStats = wards.map((w: string) => {
+      const value = petitions.filter((p: PrismaPetition) => p.ward === w).length;
       return { name: w, value };
     }).sort((a, b) => b.value - a.value);
 
@@ -488,7 +500,7 @@ export const DataService = {
       RESOLVED: 0,
       CLOSED: 0
     };
-    petitions.forEach(p => {
+    petitions.forEach((p: PrismaPetition) => {
       if (statusCounts[p.status as PetitionStatus] !== undefined) {
         statusCounts[p.status as PetitionStatus]++;
       }
@@ -518,7 +530,7 @@ export const DataService = {
       dailyCounts[label] = { total: 0, resolved: 0, pending: 0 };
     }
     
-    petitions.forEach(p => {
+    petitions.forEach((p: PrismaPetition) => {
       const label = new Date(p.createdAt).toLocaleDateString('en-US', { day: '2-digit', month: 'short' });
       if (dailyCounts[label]) {
         dailyCounts[label].total++;
@@ -542,12 +554,12 @@ export const DataService = {
       { name: 'Revenue Dept.', match: 'Revenue Dept.' }
     ];
 
-    const departmentPerformance = deptsList.map(d => {
-      const assignedPetitions = petitions.filter(p => p.assignedDept === d.match || p.assignedDept?.includes(d.name));
+    const departmentPerformance = deptsList.map((d) => {
+      const assignedPetitions = petitions.filter((p: PrismaPetition) => p.assignedDept === d.match || p.assignedDept?.includes(d.name));
       const assigned = assignedPetitions.length;
-      const deptPending = assignedPetitions.filter(p => p.status === 'SUBMITTED' || p.status === 'UNDER_REVIEW').length;
-      const deptInProgress = assignedPetitions.filter(p => p.status === 'FORWARDED' || p.status === 'IN_PROGRESS').length;
-      const deptResolved = assignedPetitions.filter(p => p.status === 'RESOLVED').length;
+      const deptPending = assignedPetitions.filter((p: PrismaPetition) => p.status === 'SUBMITTED' || p.status === 'UNDER_REVIEW').length;
+      const deptInProgress = assignedPetitions.filter((p: PrismaPetition) => p.status === 'FORWARDED' || p.status === 'IN_PROGRESS').length;
+      const deptResolved = assignedPetitions.filter((p: PrismaPetition) => p.status === 'RESOLVED').length;
       const rate = assigned > 0 ? Math.round((deptResolved / assigned) * 100) : 0;
 
       return {
@@ -560,7 +572,7 @@ export const DataService = {
       };
     });
 
-    const activeCampTitle = announcements.find(a => a.active && a.category === 'CAMP')?.title || 'No active CAMP announcements';
+    const activeCampTitle = announcements.find((a: PrismaAnnouncement) => a.active && a.category === 'CAMP')?.title || 'No active CAMP announcements';
 
     return {
       overview: {
