@@ -1,13 +1,12 @@
-import fs from 'fs';
-import path from 'path';
 import crypto from 'crypto';
-import { Petition, Announcement, PetitionStatus, StatusLog, User, UserRole, Appointment, AppointmentConfig, AppointmentStatus } from '../types';
+import { Petition, Announcement, AnnouncementCategory, PetitionStatus, StatusLog, UserRole, Appointment, AppointmentConfig, AppointmentStatus } from '../types';
+import { prisma } from './prisma';
 
 interface UserRecord {
   id: string;
   mobile: string;
-  pin?: string; // legacy support if any
-  password?: string; // Hashed password
+  pin?: string;
+  password?: string;
   name: string;
   email?: string;
   role: UserRole;
@@ -15,116 +14,116 @@ interface UserRecord {
   createdAt: string;
 }
 
-interface DatabaseSchema {
-  users: UserRecord[];
-  petitions: Petition[];
-  announcements: Announcement[];
-  appointments: Appointment[];
-  appointmentConfig: AppointmentConfig;
-}
-
-const DB_PATH = path.join(process.cwd(), 'src', 'db', 'database.json');
-
-// Ensure database file and directories exist
-function ensureDbExists() {
-  const dir = path.dirname(DB_PATH);
-  if (!fs.existsSync(dir)) {
-    fs.mkdirSync(dir, { recursive: true });
-  }
-  
-  if (!fs.existsSync(DB_PATH)) {
-    const initialDb: DatabaseSchema = {
-      users: [
-        {
-          id: 'usr-mla-default',
-          mobile: '9361786461',
-          name: 'Siva Shankaran D. (Hon. MLA)',
-          password: hashPassword('siva1234'),
-          role: 'MLA',
-          createdAt: new Date().toISOString()
-        },
-        {
-          id: 'usr-staff-default',
-          mobile: '9361786461',
-          name: 'Siva Shankaran D. (Staff Coordinator)',
-          password: hashPassword('siva1234'),
-          role: 'STAFF',
-          ward: 'Ward 12',
-          createdAt: new Date().toISOString()
-        }
-      ],
-      petitions: [],
-      announcements: [],
-      appointments: [],
-      appointmentConfig: {
-        dailyLimit: 12,
-        startTime: '13:00',
-        endTime: '18:00',
-        slotDuration: 25,
-        bufferTime: 5,
-        holidays: [],
-        weeklyOffDays: [0, 6],
-        specialBlockedDates: []
-      }
-    };
-    fs.writeFileSync(DB_PATH, JSON.stringify(initialDb, null, 2), 'utf-8');
-  }
-}
-
-// Read database file
-function readDb(): DatabaseSchema {
-  ensureDbExists();
-  try {
-    const content = fs.readFileSync(DB_PATH, 'utf-8');
-    const parsed = JSON.parse(content);
-    
-    // Polyfill any missing properties for legacy database loads
-    if (!parsed.appointments) parsed.appointments = [];
-    if (!parsed.appointmentConfig) {
-      parsed.appointmentConfig = {
-        dailyLimit: 12,
-        startTime: '13:00',
-        endTime: '18:00',
-        slotDuration: 25,
-        bufferTime: 5,
-        holidays: [],
-        weeklyOffDays: [0, 6],
-        specialBlockedDates: []
-      };
-    }
-    return parsed;
-  } catch (error) {
-    console.error('Error reading database.json, resetting database schema', error);
-    const initialDb: DatabaseSchema = {
-      users: [],
-      petitions: [],
-      announcements: [],
-      appointments: [],
-      appointmentConfig: {
-        dailyLimit: 12,
-        startTime: '13:00',
-        endTime: '18:00',
-        slotDuration: 25,
-        bufferTime: 5,
-        holidays: [],
-        weeklyOffDays: [0, 6],
-        specialBlockedDates: []
-      }
-    };
-    fs.writeFileSync(DB_PATH, JSON.stringify(initialDb, null, 2), 'utf-8');
-    return initialDb;
-  }
-}
-
-// Write database file
-function writeDb(db: DatabaseSchema) {
-  ensureDbExists();
-  fs.writeFileSync(DB_PATH, JSON.stringify(db, null, 2), 'utf-8');
-}
-
 // Password Hashing Helper
 export function hashPassword(password: string): string {
   return crypto.createHash('sha256').update(password).digest('hex');
+}
+
+// Map database records to frontend structures
+function mapUser(u: any): UserRecord {
+  return {
+    id: u.id,
+    mobile: u.mobile,
+    name: u.name || '',
+    email: u.email || undefined,
+    password: u.password || undefined,
+    role: u.role as UserRole,
+    ward: u.ward || undefined,
+    createdAt: u.createdAt.toISOString()
+  };
+}
+
+function mapAnnouncement(a: any): Announcement {
+  return {
+    id: a.id,
+    title: a.title,
+    content: a.content,
+    category: a.category as AnnouncementCategory,
+    date: a.date.toISOString(),
+    active: a.active
+  };
+}
+
+function mapStatusLog(l: any): StatusLog {
+  return {
+    id: l.id,
+    petitionId: l.petitionId,
+    status: l.status as PetitionStatus,
+    remarks: l.remarks || undefined,
+    actor: l.actor,
+    createdAt: l.createdAt.toISOString()
+  };
+}
+
+function mapPetition(p: any): Petition {
+  return {
+    id: p.id,
+    name: p.name,
+    mobile: p.mobile,
+    ward: p.ward,
+    address: p.address,
+    category: p.category,
+    description: p.description,
+    documents: p.documents || [],
+    gpsLocation: p.gpsLocation || undefined,
+    status: p.status as PetitionStatus,
+    remarks: p.remarks || undefined,
+    internalRemarks: p.internalRemarks || undefined,
+    publicRemarks: p.publicRemarks || undefined,
+    createdAt: p.createdAt.toISOString(),
+    updatedAt: p.updatedAt.toISOString(),
+    resolvedAt: p.resolvedAt ? p.resolvedAt.toISOString() : undefined,
+    priority: p.priority as 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL',
+    assignedDept: p.assignedDept || undefined,
+    history: (p.history || []).map(mapStatusLog).sort((a: StatusLog, b: StatusLog) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
+  };
+}
+
+function mapAppointment(a: any): Appointment {
+  return {
+    id: a.id,
+    citizenId: a.citizenId,
+    citizenName: a.citizenName,
+    citizenMobile: a.citizenMobile,
+    date: a.date,
+    timeSlot: a.timeSlot,
+    purpose: a.purpose,
+    status: a.status as AppointmentStatus,
+    remarks: a.remarks || undefined,
+    createdAt: a.createdAt.toISOString(),
+    updatedAt: a.updatedAt.toISOString()
+  };
+}
+
+async function getOrCreateAppointmentConfig(): Promise<AppointmentConfig> {
+  let config = await prisma.appointmentConfig.findUnique({
+    where: { id: 1 }
+  });
+  if (!config) {
+    config = await prisma.appointmentConfig.create({
+      data: {
+        id: 1,
+        dailyLimit: 12,
+        startTime: '13:00',
+        endTime: '18:00',
+        slotDuration: 25,
+        bufferTime: 5,
+        holidays: [],
+        weeklyOffDays: [0, 6],
+        specialBlockedDates: []
+      }
+    });
+  }
+  return {
+    dailyLimit: config.dailyLimit,
+    startTime: config.startTime,
+    endTime: config.endTime,
+    slotDuration: config.slotDuration,
+    bufferTime: config.bufferTime,
+    holidays: config.holidays,
+    weeklyOffDays: config.weeklyOffDays,
+    specialBlockedDates: config.specialBlockedDates
+  };
 }
 
 const categories = ['Roads & Infrastructure', 'Water Supply', 'Pension', 'Electricity', 'Government Schemes', 'Education', 'Others'];
@@ -133,8 +132,10 @@ const wards = ['Ward 12', 'Ward 7', 'Ward 15', 'Ward 3', 'Ward 18'];
 export const DataService = {
   // Check if any Super Admin / MLA account exists
   hasAdmin: async (): Promise<boolean> => {
-    const db = readDb();
-    return db.users.some(u => u.role === 'MLA');
+    const count = await prisma.user.count({
+      where: { role: 'MLA' }
+    });
+    return count > 0;
   },
 
   // Register first MLA Super Admin
@@ -144,26 +145,27 @@ export const DataService = {
     email: string;
     password: string;
   }): Promise<UserRecord> => {
-    const db = readDb();
-    
     // Check if MLA already exists
-    if (db.users.some(u => u.role === 'MLA')) {
+    const hasAdmin = await prisma.user.findFirst({
+      where: { role: 'MLA' }
+    });
+    if (hasAdmin) {
       throw new Error('An administrator account is already configured.');
     }
 
-    const newAdmin: UserRecord = {
-      id: `usr-mla-${Math.floor(1000 + Math.random() * 9000)}`,
-      name: adminData.name,
-      mobile: adminData.mobile,
-      email: adminData.email,
-      password: hashPassword(adminData.password),
-      role: 'MLA',
-      createdAt: new Date().toISOString()
-    };
+    const newAdmin = await prisma.user.create({
+      data: {
+        id: `usr-mla-${Math.floor(1000 + Math.random() * 9000)}`,
+        name: adminData.name,
+        mobile: adminData.mobile,
+        email: adminData.email,
+        password: hashPassword(adminData.password),
+        role: 'MLA',
+        createdAt: new Date()
+      }
+    });
 
-    db.users.push(newAdmin);
-    writeDb(db);
-    return newAdmin;
+    return mapUser(newAdmin);
   },
 
   // Register Staff Coordinator (Added by Admin)
@@ -173,100 +175,115 @@ export const DataService = {
     password: string;
     ward: string;
   }): Promise<UserRecord> => {
-    const db = readDb();
-
     // Check if user already exists
-    if (db.users.some(u => u.mobile === staffData.mobile)) {
+    const exists = await prisma.user.findFirst({
+      where: { mobile: staffData.mobile }
+    });
+    if (exists) {
       throw new Error('User with this mobile number already exists.');
     }
 
-    const newStaff: UserRecord = {
-      id: `usr-staff-${Math.floor(1000 + Math.random() * 9000)}`,
-      name: staffData.name,
-      mobile: staffData.mobile,
-      password: hashPassword(staffData.password),
-      role: 'STAFF',
-      ward: staffData.ward,
-      createdAt: new Date().toISOString()
-    };
+    const newStaff = await prisma.user.create({
+      data: {
+        id: `usr-staff-${Math.floor(1000 + Math.random() * 9000)}`,
+        name: staffData.name,
+        mobile: staffData.mobile,
+        password: hashPassword(staffData.password),
+        role: 'STAFF',
+        ward: staffData.ward,
+        createdAt: new Date()
+      }
+    });
 
-    db.users.push(newStaff);
-    writeDb(db);
-    return newStaff;
+    return mapUser(newStaff);
   },
 
   // Register or login a Citizen on-demand
   registerOrGetCitizen: async (mobile: string, name: string): Promise<UserRecord> => {
-    const db = readDb();
-    let citizen = db.users.find(u => u.mobile === mobile && u.role === 'CITIZEN');
+    let citizen = await prisma.user.findFirst({
+      where: { mobile, role: 'CITIZEN' }
+    });
     
     if (!citizen) {
-      citizen = {
-        id: `usr-citizen-${mobile}`,
-        mobile,
-        name: name || 'Citizen User',
-        role: 'CITIZEN',
-        createdAt: new Date().toISOString()
-      };
-      db.users.push(citizen);
-      writeDb(db);
+      citizen = await prisma.user.create({
+        data: {
+          id: `usr-citizen-${mobile}`,
+          mobile,
+          name: name || 'Citizen User',
+          role: 'CITIZEN',
+          createdAt: new Date()
+        }
+      });
     } else if (name && citizen.name !== name) {
-      // Update name if changed
-      citizen.name = name;
-      writeDb(db);
+      citizen = await prisma.user.update({
+        where: { id: citizen.id },
+        data: { name }
+      });
     }
     
-    return citizen;
+    return mapUser(citizen);
   },
 
   // Verify credentials on login
   authenticateUser: async (mobile: string, password: string, role: UserRole): Promise<UserRecord | null> => {
-    const db = readDb();
     const hashed = hashPassword(password);
-    const user = db.users.find(u => u.mobile === mobile && u.role === role);
+    const user = await prisma.user.findFirst({
+      where: { mobile, role }
+    });
     
     if (user && user.password === hashed) {
-      return user;
+      return mapUser(user);
     }
     return null;
   },
 
   // Get list of all staff
   getStaffUsers: async (): Promise<UserRecord[]> => {
-    const db = readDb();
-    return db.users.filter(u => u.role === 'STAFF');
+    const staff = await prisma.user.findMany({
+      where: { role: 'STAFF' }
+    });
+    return staff.map(mapUser);
   },
 
   // Announcements CRUD
   getAnnouncements: async (): Promise<Announcement[]> => {
-    const db = readDb();
-    return db.announcements.filter(a => a.active).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    const list = await prisma.announcement.findMany({
+      where: { active: true },
+      orderBy: { date: 'desc' }
+    });
+    return list.map(mapAnnouncement);
   },
 
   getAllAnnouncements: async (): Promise<Announcement[]> => {
-    const db = readDb();
-    return [...db.announcements].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    const list = await prisma.announcement.findMany({
+      orderBy: { date: 'desc' }
+    });
+    return list.map(mapAnnouncement);
   },
 
   createAnnouncement: async (ann: Omit<Announcement, 'id' | 'date' | 'active'>): Promise<Announcement> => {
-    const db = readDb();
-    const newAnn: Announcement = {
-      ...ann,
-      id: `ann-${Math.floor(Math.random() * 10000)}`,
-      date: new Date().toISOString(),
-      active: true,
-    };
-    db.announcements.push(newAnn);
-    writeDb(db);
-    return newAnn;
+    const newAnn = await prisma.announcement.create({
+      data: {
+        id: `ann-${Math.floor(Math.random() * 10000)}`,
+        title: ann.title,
+        content: ann.content,
+        category: ann.category,
+        date: new Date(),
+        active: true
+      }
+    });
+    return mapAnnouncement(newAnn);
   },
 
   toggleAnnouncementStatus: async (id: string): Promise<boolean> => {
-    const db = readDb();
-    const annIndex = db.announcements.findIndex(a => a.id === id);
-    if (annIndex !== -1) {
-      db.announcements[annIndex].active = !db.announcements[annIndex].active;
-      writeDb(db);
+    const ann = await prisma.announcement.findUnique({
+      where: { id }
+    });
+    if (ann) {
+      await prisma.announcement.update({
+        where: { id },
+        data: { active: !ann.active }
+      });
       return true;
     }
     return false;
@@ -274,21 +291,34 @@ export const DataService = {
 
   // Petitions CRUD
   getPetitions: async (): Promise<Petition[]> => {
-    const db = readDb();
-    return [...db.petitions].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    const list = await prisma.petition.findMany({
+      include: { history: true },
+      orderBy: { createdAt: 'desc' }
+    });
+    return list.map(mapPetition);
   },
 
   getPetitionById: async (id: string): Promise<Petition | null> => {
-    const db = readDb();
-    const petition = db.petitions.find(p => p.id.toUpperCase() === id.toUpperCase());
-    return petition ? { ...petition } : null;
+    const petition = await prisma.petition.findUnique({
+      where: { id },
+      include: { history: true }
+    });
+    if (petition) return mapPetition(petition);
+    
+    const lowerPetition = await prisma.petition.findFirst({
+      where: { id: { equals: id, mode: 'insensitive' } },
+      include: { history: true }
+    });
+    return lowerPetition ? mapPetition(lowerPetition) : null;
   },
 
   getPetitionsByMobile: async (mobile: string): Promise<Petition[]> => {
-    const db = readDb();
-    return db.petitions
-      .filter(p => p.mobile === mobile)
-      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    const list = await prisma.petition.findMany({
+      where: { mobile },
+      include: { history: true },
+      orderBy: { createdAt: 'desc' }
+    });
+    return list.map(mapPetition);
   },
 
   createPetition: async (pData: {
@@ -301,46 +331,51 @@ export const DataService = {
     documents: string[];
     gpsLocation?: string;
   }): Promise<Petition> => {
-    const db = readDb();
-
-    // ID Generation: Format PET-YYYY-XXXXXX
     let id = '';
     let isUnique = false;
     while (!isUnique) {
       const year = new Date().getFullYear();
       const randomHex = crypto.randomBytes(3).toString('hex').toUpperCase();
       id = `PET-${year}-${randomHex}`;
-      // Check collision
-      const exists = db.petitions.some(p => p.id.toUpperCase() === id.toUpperCase());
-      if (!exists) {
+      const count = await prisma.petition.count({
+        where: { id }
+      });
+      if (count === 0) {
         isUnique = true;
       }
     }
 
-    const newPetition: Petition = {
-      id,
-      ...pData,
-      status: 'SUBMITTED',
-      priority: 'MEDIUM',
-      internalRemarks: '',
-      publicRemarks: '',
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      history: [
-        {
-          id: `log-${id}-initial`,
-          petitionId: id,
-          status: 'SUBMITTED',
-          remarks: 'Petition registered digitally on the platform.',
-          actor: `Citizen (${pData.name})`,
-          createdAt: new Date().toISOString(),
+    const newPetition = await prisma.petition.create({
+      data: {
+        id,
+        name: pData.name,
+        mobile: pData.mobile,
+        ward: pData.ward,
+        address: pData.address,
+        category: pData.category,
+        description: pData.description,
+        documents: pData.documents || [],
+        gpsLocation: pData.gpsLocation || null,
+        status: 'SUBMITTED',
+        priority: 'MEDIUM',
+        internalRemarks: '',
+        publicRemarks: '',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        history: {
+          create: {
+            id: `log-${id}-initial`,
+            status: 'SUBMITTED',
+            remarks: 'Petition registered digitally on the platform.',
+            actor: `Citizen (${pData.name})`,
+            createdAt: new Date()
+          }
         }
-      ]
-    };
+      },
+      include: { history: true }
+    });
 
-    db.petitions.push(newPetition);
-    writeDb(db);
-    return newPetition;
+    return mapPetition(newPetition);
   },
 
   updatePetitionStatus: async (
@@ -354,67 +389,70 @@ export const DataService = {
     publicRemarks?: string,
     documents?: string[]
   ): Promise<Petition | null> => {
-    const db = readDb();
-    const petIndex = db.petitions.findIndex(p => p.id.toUpperCase() === id.toUpperCase());
-    if (petIndex === -1) return null;
+    const petition = await prisma.petition.findUnique({
+      where: { id }
+    });
+    if (!petition) return null;
 
-    const petition = db.petitions[petIndex];
-    
-    const log: StatusLog = {
-      id: `log-${id}-${Math.floor(Math.random() * 100000)}`,
-      petitionId: id,
+    const dataToUpdate: any = {
       status,
-      remarks: remarks || `Status updated to ${status}`,
-      actor,
-      createdAt: new Date().toISOString(),
+      remarks,
+      updatedAt: new Date(),
+      history: {
+        create: {
+          id: `log-${id}-${Math.floor(Math.random() * 100000)}`,
+          status,
+          remarks: remarks || `Status updated to ${status}`,
+          actor,
+          createdAt: new Date()
+        }
+      }
     };
 
-    petition.status = status;
-    petition.remarks = remarks;
-    petition.updatedAt = new Date().toISOString();
-    petition.history.push(log);
-    
     if (assignedDept !== undefined) {
-      petition.assignedDept = assignedDept;
+      dataToUpdate.assignedDept = assignedDept;
     }
     if (priority !== undefined) {
-      petition.priority = priority;
+      dataToUpdate.priority = priority;
     }
     if (internalRemarks !== undefined) {
-      petition.internalRemarks = internalRemarks;
+      dataToUpdate.internalRemarks = internalRemarks;
     }
     if (publicRemarks !== undefined) {
-      petition.publicRemarks = publicRemarks;
+      dataToUpdate.publicRemarks = publicRemarks;
     }
     if (documents && documents.length > 0) {
-      petition.documents = [...(petition.documents || []), ...documents];
+      dataToUpdate.documents = [...(petition.documents || []), ...documents];
     }
     
     if (status === 'RESOLVED' || status === 'CLOSED') {
-      petition.resolvedAt = new Date().toISOString();
+      dataToUpdate.resolvedAt = new Date();
     }
 
-    db.petitions[petIndex] = { ...petition };
-    writeDb(db);
-    return petition;
+    const updated = await prisma.petition.update({
+      where: { id },
+      data: dataToUpdate,
+      include: { history: true }
+    });
+
+    return mapPetition(updated);
   },
 
-  // Calculate dynamic analytics from file db
+  // Calculate dynamic analytics from DB
   getAnalytics: async () => {
-    const db = readDb();
-    const petitions = db.petitions;
+    const petitions = await prisma.petition.findMany();
+    const announcements = await prisma.announcement.findMany();
     
     const total = petitions.length;
     const today = petitions.filter(p => {
       const todayStr = new Date().toISOString().split('T')[0];
-      return p.createdAt.toString().startsWith(todayStr);
+      return p.createdAt.toISOString().startsWith(todayStr);
     }).length;
     
     const pending = petitions.filter(p => p.status === 'SUBMITTED' || p.status === 'VERIFIED' || p.status === 'UNDER_REVIEW').length;
     const inProgress = petitions.filter(p => p.status === 'FORWARDED' || p.status === 'IN_PROGRESS').length;
     const resolved = petitions.filter(p => p.status === 'RESOLVED' || p.status === 'CLOSED').length;
     
-    // Calculate average resolution time dynamically
     const resolvedPetitions = petitions.filter(p => p.status === 'RESOLVED' || p.status === 'CLOSED');
     let avgResolutionDaysStr = '–';
     if (resolvedPetitions.length > 0) {
@@ -425,29 +463,22 @@ export const DataService = {
       avgResolutionDaysStr = val > 0 ? `${val} Days` : '0.1 Days';
     }
     
-    // Satisfaction score based on actual feedback (or – if no data)
     const satisfactionScoreStr = total > 0 ? '4.3 / 5' : '–';
-    
-    // Total citizens
     const uniqueMobiles = new Set(petitions.map(p => p.mobile));
     const totalCitizens = uniqueMobiles.size;
-    
     const avgResponseTimeStr = total > 0 ? '1.8 Days' : '–';
 
-    // Categories Distribution
-    const categoryStats = categories.map((c, index) => {
+    const categoryStats = categories.map(c => {
       const value = petitions.filter(p => p.category === c).length;
       const pct = total > 0 ? value / total : 0;
       return { name: c, value, percent: pct };
     });
 
-    // Wards Distribution (Top 5)
     const wardStats = wards.map(w => {
       const value = petitions.filter(p => p.ward === w).length;
       return { name: w, value };
     }).sort((a, b) => b.value - a.value);
 
-    // Statuses Distribution
     const statusCounts: Record<PetitionStatus, number> = {
       SUBMITTED: 0,
       VERIFIED: 0,
@@ -458,8 +489,8 @@ export const DataService = {
       CLOSED: 0
     };
     petitions.forEach(p => {
-      if (statusCounts[p.status] !== undefined) {
-        statusCounts[p.status]++;
+      if (statusCounts[p.status as PetitionStatus] !== undefined) {
+        statusCounts[p.status as PetitionStatus]++;
       }
     });
     
@@ -477,7 +508,6 @@ export const DataService = {
       return { name: statusLabelsMap[key as PetitionStatus], value, percent: pct };
     });
 
-    // Weekly Trends data (last 7 days)
     const dailyStats = [];
     const dailyCounts: Record<string, { total: number, resolved: number, pending: number }> = {};
     
@@ -504,7 +534,6 @@ export const DataService = {
       dailyStats.push({ date, ...counts });
     }
 
-    // Departments performance
     const deptsList = [
       { name: 'Public Works', match: 'Public Works Department (PWD - Roads)' },
       { name: 'Water Supply', match: 'Municipal Corporation (Water & Sanitation Division)' },
@@ -531,7 +560,7 @@ export const DataService = {
       };
     });
 
-    const activeCampTitle = db.announcements.find(a => a.active && a.category === 'CAMP')?.title || 'No active CAMP announcements';
+    const activeCampTitle = announcements.find(a => a.active && a.category === 'CAMP')?.title || 'No active CAMP announcements';
 
     return {
       overview: {
@@ -554,35 +583,61 @@ export const DataService = {
     };
   },
 
-  // Appointment Booking System Methods
+  // Appointment Config
   getAppointmentConfig: async (): Promise<AppointmentConfig> => {
-    const db = readDb();
-    return db.appointmentConfig;
+    return getOrCreateAppointmentConfig();
   },
 
   updateAppointmentConfig: async (config: Partial<AppointmentConfig>): Promise<AppointmentConfig> => {
-    const db = readDb();
-    db.appointmentConfig = {
-      ...db.appointmentConfig,
-      ...config
+    const existing = await getOrCreateAppointmentConfig();
+    const updated = await prisma.appointmentConfig.update({
+      where: { id: 1 },
+      data: {
+        dailyLimit: config.dailyLimit !== undefined ? config.dailyLimit : existing.dailyLimit,
+        startTime: config.startTime !== undefined ? config.startTime : existing.startTime,
+        endTime: config.endTime !== undefined ? config.endTime : existing.endTime,
+        slotDuration: config.slotDuration !== undefined ? config.slotDuration : existing.slotDuration,
+        bufferTime: config.bufferTime !== undefined ? config.bufferTime : existing.bufferTime,
+        holidays: config.holidays !== undefined ? config.holidays : existing.holidays,
+        weeklyOffDays: config.weeklyOffDays !== undefined ? config.weeklyOffDays : existing.weeklyOffDays,
+        specialBlockedDates: config.specialBlockedDates !== undefined ? config.specialBlockedDates : existing.specialBlockedDates
+      }
+    });
+    return {
+      dailyLimit: updated.dailyLimit,
+      startTime: updated.startTime,
+      endTime: updated.endTime,
+      slotDuration: updated.slotDuration,
+      bufferTime: updated.bufferTime,
+      holidays: updated.holidays,
+      weeklyOffDays: updated.weeklyOffDays,
+      specialBlockedDates: updated.specialBlockedDates
     };
-    writeDb(db);
-    return db.appointmentConfig;
   },
 
+  // Appointments CRUD
   getAppointments: async (): Promise<Appointment[]> => {
-    const db = readDb();
-    return db.appointments;
+    const list = await prisma.appointment.findMany();
+    return list.map(mapAppointment);
   },
 
   getAppointmentsByCitizen: async (citizenId: string): Promise<Appointment[]> => {
-    const db = readDb();
-    return db.appointments.filter(a => a.citizenId === citizenId || a.citizenMobile === citizenId);
+    const list = await prisma.appointment.findMany({
+      where: {
+        OR: [
+          { citizenId },
+          { citizenMobile: citizenId }
+        ]
+      }
+    });
+    return list.map(mapAppointment);
   },
 
   getAppointmentsByDate: async (date: string): Promise<Appointment[]> => {
-    const db = readDb();
-    return db.appointments.filter(a => a.date === date);
+    const list = await prisma.appointment.findMany({
+      where: { date }
+    });
+    return list.map(mapAppointment);
   },
 
   generateTimeSlots: (config: AppointmentConfig): string[] => {
@@ -614,16 +669,14 @@ export const DataService = {
     citizenId: string;
     citizenName: string;
     citizenMobile: string;
-    date: string; // YYYY-MM-DD
+    date: string;
     timeSlot: string;
     purpose: string;
   }): Promise<{ appointment?: Appointment; error?: string }> => {
-    const db = readDb();
-    const config = db.appointmentConfig;
+    const config = await getOrCreateAppointmentConfig();
 
-    // Check if date is blocked (holiday, off day, etc.)
     const dateObj = new Date(appointmentData.date);
-    const weekday = dateObj.getDay(); // 0-6
+    const weekday = dateObj.getDay();
 
     if (config.holidays.includes(appointmentData.date)) {
       return { error: 'The selected date is an official office holiday.' };
@@ -635,52 +688,59 @@ export const DataService = {
       return { error: 'The selected date has been temporarily blocked by administration.' };
     }
 
-    // Check duplicate booking for the same citizen on the same day
     const activeStates = ['PENDING', 'APPROVED', 'RESCHEDULED'];
-    const citizenDup = db.appointments.some(
-      a => 
-        (a.citizenId === appointmentData.citizenId || a.citizenMobile === appointmentData.citizenMobile) &&
-        a.date === appointmentData.date &&
-        activeStates.includes(a.status)
-    );
+    const citizenDup = await prisma.appointment.findFirst({
+      where: {
+        OR: [
+          { citizenId: appointmentData.citizenId },
+          { citizenMobile: appointmentData.citizenMobile }
+        ],
+        date: appointmentData.date,
+        status: { in: activeStates }
+      }
+    });
     if (citizenDup) {
       return { error: 'You already have an active appointment booked for this date.' };
     }
 
-    // Check daily limit constraint
-    const activeDailyBookings = db.appointments.filter(
-      a => a.date === appointmentData.date && activeStates.includes(a.status)
-    );
-    if (activeDailyBookings.length >= config.dailyLimit) {
+    const activeDailyBookings = await prisma.appointment.count({
+      where: {
+        date: appointmentData.date,
+        status: { in: activeStates }
+      }
+    });
+    if (activeDailyBookings >= config.dailyLimit) {
       return { error: 'This date is fully booked. Please choose another available date.' };
     }
 
-    // Check slot duplicate booking
-    const slotDup = db.appointments.some(
-      a => a.date === appointmentData.date && a.timeSlot === appointmentData.timeSlot && activeStates.includes(a.status)
-    );
+    const slotDup = await prisma.appointment.findFirst({
+      where: {
+        date: appointmentData.date,
+        timeSlot: appointmentData.timeSlot,
+        status: { in: activeStates }
+      }
+    });
     if (slotDup) {
       return { error: 'This time slot is already booked. Please choose another slot.' };
     }
 
-    // Generate unique Appointment ID
     const id = `APT-${Date.now().toString().slice(-6)}`;
-    const newAppointment: Appointment = {
-      id,
-      citizenId: appointmentData.citizenId,
-      citizenName: appointmentData.citizenName,
-      citizenMobile: appointmentData.citizenMobile,
-      date: appointmentData.date,
-      timeSlot: appointmentData.timeSlot,
-      purpose: appointmentData.purpose,
-      status: 'PENDING',
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    };
+    const newAppointment = await prisma.appointment.create({
+      data: {
+        id,
+        citizenId: appointmentData.citizenId,
+        citizenName: appointmentData.citizenName,
+        citizenMobile: appointmentData.citizenMobile,
+        date: appointmentData.date,
+        timeSlot: appointmentData.timeSlot,
+        purpose: appointmentData.purpose,
+        status: 'PENDING',
+        createdAt: new Date(),
+        updatedAt: new Date()
+      }
+    });
 
-    db.appointments.push(newAppointment);
-    writeDb(db);
-    return { appointment: newAppointment };
+    return { appointment: mapAppointment(newAppointment) };
   },
 
   updateAppointmentStatus: async (
@@ -690,21 +750,27 @@ export const DataService = {
     newDate?: string,
     newTimeSlot?: string
   ): Promise<Appointment | null> => {
-    const db = readDb();
-    const index = db.appointments.findIndex(a => a.id === id);
-    if (index === -1) return null;
+    const appointment = await prisma.appointment.findUnique({
+      where: { id }
+    });
+    if (!appointment) return null;
 
-    const appointment = db.appointments[index];
-    appointment.status = status;
-    if (remarks !== undefined) appointment.remarks = remarks;
+    const dataToUpdate: any = {
+      status,
+      updatedAt: new Date()
+    };
+
+    if (remarks !== undefined) dataToUpdate.remarks = remarks;
     if (status === 'RESCHEDULED' && newDate && newTimeSlot) {
-      appointment.date = newDate;
-      appointment.timeSlot = newTimeSlot;
+      dataToUpdate.date = newDate;
+      dataToUpdate.timeSlot = newTimeSlot;
     }
-    appointment.updatedAt = new Date().toISOString();
 
-    db.appointments[index] = appointment;
-    writeDb(db);
-    return appointment;
+    const updated = await prisma.appointment.update({
+      where: { id },
+      data: dataToUpdate
+    });
+
+    return mapAppointment(updated);
   }
 };

@@ -1,0 +1,88 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+datasource db {
+  provider = "postgresql"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id        String   @id
+  mobile    String
+  name      String?
+  email     String?
+  password  String?
+  role      String   // "CITIZEN" | "STAFF" | "MLA"
+  ward      String?
+  createdAt DateTime @default(now())
+}
+
+model Petition {
+  id              String      @id // Format: PET-YYYY-XXXXXX
+  name            String
+  mobile          String
+  ward            String
+  address         String
+  category        String
+  description     String
+  documents       String[]    // Supported natively in PostgreSQL
+  gpsLocation     String?
+  status          String      // "SUBMITTED" | "VERIFIED" | "UNDER_REVIEW" | "FORWARDED" | "IN_PROGRESS" | "RESOLVED" | "CLOSED"
+  remarks         String?
+  internalRemarks String?
+  publicRemarks   String?
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+  resolvedAt      DateTime?
+  priority        String      @default("MEDIUM") // "LOW" | "MEDIUM" | "HIGH" | "CRITICAL"
+  assignedDept    String?
+  history         StatusLog[]
+}
+
+model StatusLog {
+  id         String   @id
+  petitionId String
+  petition   Petition @relation(fields: [petitionId], references: [id], onDelete: Cascade)
+  status     String
+  remarks    String?
+  actor      String
+  createdAt  DateTime @default(now())
+}
+
+model Announcement {
+  id       String   @id
+  title    String
+  content  String
+  category String   // "ALERT" | "PUBLIC_MEETING" | "CAMP" | "HOLIDAY" | "GENERAL"
+  date     DateTime @default(now())
+  active   Boolean  @default(true)
+}
+
+model Appointment {
+  id            String   @id // Format: APT-XXXXXX
+  citizenId     String
+  citizenName   String
+  citizenMobile String
+  date          String   // YYYY-MM-DD
+  timeSlot      String
+  purpose       String
+  status        String   // "PENDING" | "APPROVED" | "REJECTED" | "RESCHEDULED" | "CANCELLED"
+  remarks       String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model AppointmentConfig {
+  id                  Int      @id @default(1)
+  dailyLimit          Int      @default(12)
+  startTime           String   @default("13:00")
+  endTime             String   @default("18:00")
+  slotDuration        Int      @default(25)
+  bufferTime          Int      @default(5)
+  holidays            String[]
+  weeklyOffDays       Int[]
+  specialBlockedDates String[]
+}

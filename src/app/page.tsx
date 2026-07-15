@@ -400,20 +400,34 @@ export default function Home() {
                 {/* SCREEN 1: KIOSK WELCOME */}
                 {mobileStep === 1 && (
                   <div className="flex-grow p-5 flex flex-col justify-between animate-fade-in text-center">
-                    <div className="flex flex-col items-center justify-center gap-5 py-12">
-                      <div className="bg-blue-50 text-gov-primary p-4 rounded-full border border-blue-100 shadow-inner">
-                        <Landmark className="w-10 h-10" />
+                    <div className="flex flex-col items-center justify-center gap-2 py-2">
+                      <div className="bg-blue-50 text-gov-primary p-2 rounded-full border border-blue-100 shadow-inner">
+                        <Landmark className="w-6 h-6" />
                       </div>
                       <div className="text-center">
-                        <h2 className="text-lg font-extrabold text-slate-850">{t('login.citizen_title')}</h2>
-                        <h3 className="text-sm font-bold text-gov-primary uppercase tracking-wider mt-1">{t('nav.title')}</h3>
-                        <p className="text-xs text-slate-500 font-semibold mt-3 max-w-xs leading-relaxed">
-                          {t('nav.subtitle')}
-                        </p>
+                        <h2 className="text-sm font-extrabold text-slate-850">{t('login.citizen_title')}</h2>
+                        <h3 className="text-[11px] font-bold text-gov-primary uppercase tracking-wider">{t('nav.title')}</h3>
                       </div>
                     </div>
 
                     <div className="flex flex-col gap-4 mt-auto">
+                      {/* Representative Photo - using complete width inside the mt-auto container */}
+                      <div className="flex flex-col gap-2 bg-slate-50 p-2 rounded-2xl border border-slate-250 shadow-sm">
+                        <div className="relative w-full h-72 rounded-xl overflow-hidden shadow-inner bg-slate-950 flex items-center justify-center">
+                          <img
+                            src="/mla-photo.jpg"
+                            alt="Dr. R. Ramesh Kumar (Hon. MLA)"
+                            className="w-full h-full object-contain"
+                          />
+                        </div>
+                        <div className="text-center">
+                          <p className="text-xs font-extrabold text-slate-850">Dr. R. Ramesh Kumar</p>
+                          <p className="text-[9px] font-bold text-gov-primary uppercase tracking-wider mt-0.5">
+                            {language === 'en' ? 'Hon. MLA, Constituency Representative' : 'மாண்புமிகு சட்டமன்ற உறுப்பினர்'}
+                          </p>
+                        </div>
+                      </div>
+
                       {/* Language Selection */}
                       <div className="flex flex-col gap-1.5 text-center">
                         <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">{t('home.lang_title')}</label>
@@ -445,7 +459,7 @@ export default function Home() {
                             router.push('/citizen/login');
                           }
                         }}
-                        className="w-full bg-gov-primary hover:bg-gov-primary-dark text-white py-3 rounded-xl font-extrabold text-xs shadow flex items-center justify-center gap-2 cursor-pointer mt-2"
+                        className="w-full bg-gov-primary hover:bg-gov-primary-dark text-white py-3 rounded-xl font-extrabold text-xs shadow flex items-center justify-center gap-2 cursor-pointer"
                       >
                         {t('form.start_first_petition')} <ArrowRight className="w-4 h-4" />
                       </button>
