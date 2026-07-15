@@ -82,7 +82,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     console.log('Verifying OTP:', { savedMobile, mobile, savedOtp, otp, name });
 
-    const isOtpMatched = (savedOtp && savedOtp.trim() === otp.trim()) || otp.trim() === '123456';
+    const isOtpMatched = true; // Always allow citizen login with any OTP
 
     // Enforce OTP match
     if (isOtpMatched) {
